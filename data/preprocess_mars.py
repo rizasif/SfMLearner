@@ -107,8 +107,10 @@ def stitch_image(right_image, left_image, final_name):
         return crop_img
     # cv2.imshow("original_image_stitched_crop.jpg", trim(dst))
 
-    file_name = "../formatted_mars_data/" + str(final_name) + ".jpg"
-    cv2.imwrite(file_name, trim(dst))
+    # file_name = "C:/Users/rizwan.asif/Desktop/projects/SfMLearner/formatted_mars_data/" + str(final_name) + ".jpg"
+    file_name = os.path.join(os.path.abspath("../formatted_mars_data/"), str(final_name) + ".jpg")
+    file_name = file_name.replace("\\", "/")
+    cv2.imwrite( file_name, trim(dst))
     # print("saved ", i)
     return file_name
 
@@ -121,6 +123,7 @@ file_names = list()
 for i in range(len(left)):
     name = stitch_image(right[i], left[i], i)
     file_names.append(name)
+print(file_names)
 
 SPLIT_RATIO = 0.2
 

@@ -30,6 +30,10 @@ class DataLoader(object):
         with open(self.dataset_dir, "rb") as fp:
             file_list = pickle.load(fp)
 
+        print("********************************************")
+        print(file_list)
+
+
         image_paths_queue = tf.train.string_input_producer(
             file_list, 
             seed=seed, 
@@ -41,10 +45,16 @@ class DataLoader(object):
         img_reader = tf.WholeFileReader()
         _, image_contents = img_reader.read(image_paths_queue)
         image_seq = tf.image.decode_jpeg(image_contents)
+        # with tf.Session() as sess:
+        #     print(image_contents.eval())
+        #     print(image_seq.eval())
+        print("********************************************")
+        # image_seq = tf.reshape(image_seq, [self.img_width, self.img_height, 3])
         # tgt_image, src_image_stack = \
         #     self.unpack_image_sequence(
         #         image_seq, self.img_height, self.img_width, self.num_source)
         tgt_image = image_seq
+        tgt_image.set_shape([self.img_height, self.img_width, 3])
         
 
         # Load camera intrinsics

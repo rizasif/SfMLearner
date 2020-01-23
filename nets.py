@@ -81,6 +81,7 @@ def disp_net(tgt_image, is_training=True):
                             weights_regularizer=slim.l2_regularizer(0.05),
                             activation_fn=tf.nn.relu,
                             outputs_collections=end_points_collection):
+            # cnv1  = slim.conv2d(tgt_image, 32,  [7, 7], stride=2, scope='cnv1')
             cnv1  = slim.conv2d(tgt_image, 32,  [7, 7], stride=2, scope='cnv1')
             cnv1b = slim.conv2d(cnv1,  32,  [7, 7], stride=1, scope='cnv1b')
             cnv2  = slim.conv2d(cnv1b, 64,  [5, 5], stride=2, scope='cnv2')

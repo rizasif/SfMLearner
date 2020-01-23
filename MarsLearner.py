@@ -22,13 +22,11 @@ class MarsLearner(object):
                             opt.num_source,
                             opt.num_scales)
         with tf.name_scope("data_loading"):
-            tgt_image, src_image_stack, intrinsics = loader.load_train_batch()
+            tgt_image  = loader.load_train_batch()
             tgt_image = self.preprocess_image(tgt_image)
-            src_image_stack = self.preprocess_image(src_image_stack)
 
         with tf.name_scope("depth_prediction"):
-            pred_disp, depth_net_endpoints = disp_net(tgt_image, 
-                                                      is_training=True)
+            pred_disp, depth_net_endpoints = disp_net(tgt_image, is_training=True)
             pred_depth = [1./d for d in pred_disp]
 
         with tf.name_scope("compute_loss"):
