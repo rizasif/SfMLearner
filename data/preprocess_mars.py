@@ -1,6 +1,8 @@
 import os
 import cv2
 import numpy as np
+import random
+import pickle
 
 def get_all_file_names(dirName):
     # Get the list of all files in directory tree at given path
@@ -99,14 +101,37 @@ def stitch_image(right_image, left_image, final_name):
         #crop top
         if not np.sum(frame[:,-1]):
             return trim(frame[:,:-2])
-        return frame
+
+        crop_img = frame[0:1000, 0:1000]
+        
+        return crop_img
     # cv2.imshow("original_image_stitched_crop.jpg", trim(dst))
-    cv2.imwrite("../formatted_mars_data/" + str(final_name) + ".jpg", trim(dst))
-    print("saved ", i)
+
+    file_name = "../formatted_mars_data/" + str(final_name) + ".jpg"
+    cv2.imwrite(file_name, trim(dst))
+    # print("saved ", i)
+    return file_name
 
 left, right = get_all_file_names("../mars_data")
 
 assert(len(left) == len(right))
 
+file_names = list()
+
 for i in range(len(left)):
-    stitch_image(right[i], left[i], i)
+    name = stitch_image(right[i], left[i], i)
+    file_names.append(name)
+
+SPLIT_RATIO = 0.2
+
+random.shuffle(file_names)
+split = int(len(file_names) * SPLIT_RATIO)
+
+train = file_names[:len(file_names)-split]
+test = file_names[len(file_names)-split:]
+
+with open("train.txt", "wb") as fp:
+    pickle.dump(train, fp)
+
+with open("test.txt", "wb") as fp:
+    pickle.dump(test, fp)

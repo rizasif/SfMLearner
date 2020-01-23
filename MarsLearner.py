@@ -5,11 +5,11 @@ import math
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-# from data_loader import DataLoader
-from nets import *
+from data_loader import DataLoader
+from nets import disp_net
 from utils import *
 
-class SfMLearner(object):
+class MarsLearner(object):
     def __init__(self):
         pass
     
@@ -30,13 +30,6 @@ class SfMLearner(object):
             pred_disp, depth_net_endpoints = disp_net(tgt_image, 
                                                       is_training=True)
             pred_depth = [1./d for d in pred_disp]
-
-        with tf.name_scope("pose_and_explainability_prediction"):
-            pred_poses, pred_exp_logits, pose_exp_net_endpoints = \
-                pose_exp_net(tgt_image,
-                             src_image_stack, 
-                             do_exp=(opt.explain_reg_weight > 0),
-                             is_training=True)
 
         with tf.name_scope("compute_loss"):
             pixel_loss = 0
@@ -201,9 +194,6 @@ class SfMLearner(object):
         #     tf.summary.histogram(var.op.name + "/gradients", grad)
 
     def train(self, opt):
-        opt.num_source = opt.seq_length - 1
-        # TODO: currently fixed to 4
-        opt.num_scales = 4
         self.opt = opt
         self.build_train_graph()
         self.collect_summaries()
@@ -274,21 +264,6 @@ class SfMLearner(object):
         self.pred_depth = pred_depth
         self.depth_epts = depth_net_endpoints
 
-    def build_pose_test_graph(self):
-        input_uint8 = tf.placeholder(tf.uint8, [self.batch_size, 
-            self.img_height, self.img_width * self.seq_length, 3], 
-            name='raw_input')
-        input_mc = self.preprocess_image(input_uint8)
-        loader = DataLoader()
-        tgt_image, src_image_stack = \
-            loader.batch_unpack_image_sequence(
-                input_mc, self.img_height, self.img_width, self.num_source)
-        with tf.name_scope("pose_prediction"):
-            pred_poses, _, _ = pose_exp_net(
-                tgt_image, src_image_stack, do_exp=False, is_training=False)
-            self.inputs = input_uint8
-            self.pred_poses = pred_poses
-
     def preprocess_image(self, image):
         # Assuming input image is uint8
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
@@ -311,10 +286,6 @@ class SfMLearner(object):
         self.batch_size = batch_size
         if self.mode == 'depth':
             self.build_depth_test_graph()
-        if self.mode == 'pose':
-            self.seq_length = seq_length
-            self.num_source = seq_length - 1
-            self.build_pose_test_graph()
 
     def inference(self, inputs, sess, mode='depth'):
         fetches = {}

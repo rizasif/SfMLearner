@@ -2,6 +2,7 @@ from __future__ import division
 import os
 import random
 import tensorflow as tf
+import pickle
 
 class DataLoader(object):
     def __init__(self, 
@@ -23,51 +24,58 @@ class DataLoader(object):
         """
         seed = random.randint(0, 2**31 - 1)
         # Load the list of training files into queues
-        file_list = self.format_file_list(self.dataset_dir, 'train')
+        # file_list = self.format_file_list(self.dataset_dir, 'train')
+
+        file_list = list()
+        with open(self.dataset_dir, "rb") as fp:
+            file_list = pickle.load(fp)
+
         image_paths_queue = tf.train.string_input_producer(
-            file_list['image_file_list'], 
-            seed=seed, 
-            shuffle=True)
-        cam_paths_queue = tf.train.string_input_producer(
-            file_list['cam_file_list'], 
+            file_list, 
             seed=seed, 
             shuffle=True)
         self.steps_per_epoch = int(
-            len(file_list['image_file_list'])//self.batch_size)
+            len(file_list)//self.batch_size)
 
         # Load images
         img_reader = tf.WholeFileReader()
         _, image_contents = img_reader.read(image_paths_queue)
         image_seq = tf.image.decode_jpeg(image_contents)
-        tgt_image, src_image_stack = \
-            self.unpack_image_sequence(
-                image_seq, self.img_height, self.img_width, self.num_source)
+        # tgt_image, src_image_stack = \
+        #     self.unpack_image_sequence(
+        #         image_seq, self.img_height, self.img_width, self.num_source)
+        tgt_image = image_seq
+        
 
         # Load camera intrinsics
-        cam_reader = tf.TextLineReader()
-        _, raw_cam_contents = cam_reader.read(cam_paths_queue)
-        rec_def = []
-        for i in range(9):
-            rec_def.append([1.])
-        raw_cam_vec = tf.decode_csv(raw_cam_contents, 
-                                    record_defaults=rec_def)
-        raw_cam_vec = tf.stack(raw_cam_vec)
-        intrinsics = tf.reshape(raw_cam_vec, [3, 3])
+        # cam_reader = tf.TextLineReader()
+        # _, raw_cam_contents = cam_reader.read(cam_paths_queue)
+        # rec_def = []
+        # for i in range(9):
+        #     rec_def.append([1.])
+        # raw_cam_vec = tf.decode_csv(raw_cam_contents, 
+        #                             record_defaults=rec_def)
+        # raw_cam_vec = tf.stack(raw_cam_vec)
+        # intrinsics = tf.reshape(raw_cam_vec, [3, 3])
 
         # Form training batches
-        src_image_stack, tgt_image, intrinsics = \
-                tf.train.batch([src_image_stack, tgt_image, intrinsics], 
-                               batch_size=self.batch_size)
+        # src_image_stack, tgt_image, intrinsics = \
+        #         tf.train.batch([src_image_stack, tgt_image, intrinsics], 
+        #                        batch_size=self.batch_size)
+
+        tgt_image = tf.train.batch([tgt_image], batch_size=self.batch_size)
 
         # Data augmentation
-        image_all = tf.concat([tgt_image, src_image_stack], axis=3)
-        image_all, intrinsics = self.data_augmentation(
-            image_all, intrinsics, self.img_height, self.img_width)
-        tgt_image = image_all[:, :, :, :3]
-        src_image_stack = image_all[:, :, :, 3:]
-        intrinsics = self.get_multi_scale_intrinsics(
-            intrinsics, self.num_scales)
-        return tgt_image, src_image_stack, intrinsics
+        # image_all = tf.concat([tgt_image, src_image_stack], axis=3)
+        # image_all, intrinsics = self.data_augmentation(
+        #     image_all, intrinsics, self.img_height, self.img_width)
+        # tgt_image = image_all[:, :, :, :3]
+        # src_image_stack = image_all[:, :, :, 3:]
+        # intrinsics = self.get_multi_scale_intrinsics(
+        #     intrinsics, self.num_scales)
+
+        # return tgt_image, src_image_stack, intrinsics
+        return tgt_image
 
     def make_intrinsics_matrix(self, fx, fy, cx, cy):
         # Assumes batch input
