@@ -46,59 +46,58 @@ class MarsLearner(object):
                 # Scale the source and target images for computing loss at the 
                 # according scale.
                 curr_tgt_image = tf.image.resize_area(tgt_image, 
-                    [int(opt.img_height/(2**s)), int(opt.img_width/(2**s))])                
-                curr_src_image_stack = tf.image.resize_area(src_image_stack, 
                     [int(opt.img_height/(2**s)), int(opt.img_width/(2**s))])
 
                 if opt.smooth_weight > 0:
                     smooth_loss += opt.smooth_weight/(2**s) * \
                         self.compute_smooth_loss(pred_disp[s])
 
-                for i in range(opt.num_source):
-                    # Inverse warp the source image to the target image frame
-                    curr_proj_image = projective_inverse_warp(
-                        curr_src_image_stack[:,:,:,3*i:3*(i+1)], 
-                        tf.squeeze(pred_depth[s], axis=3), 
-                        pred_poses[:,i,:], 
-                        intrinsics[:,s,:,:])
-                    curr_proj_error = tf.abs(curr_proj_image - curr_tgt_image)
-                    # Cross-entropy loss as regularization for the 
-                    # explainability prediction
-                    if opt.explain_reg_weight > 0:
-                        curr_exp_logits = tf.slice(pred_exp_logits[s], 
-                                                   [0, 0, 0, i*2], 
-                                                   [-1, -1, -1, 2])
-                        exp_loss += opt.explain_reg_weight * \
-                            self.compute_exp_reg_loss(curr_exp_logits,
-                                                      ref_exp_mask)
-                        curr_exp = tf.nn.softmax(curr_exp_logits)
-                    # Photo-consistency loss weighted by explainability
-                    if opt.explain_reg_weight > 0:
-                        pixel_loss += tf.reduce_mean(curr_proj_error * \
-                            tf.expand_dims(curr_exp[:,:,:,1], -1))
-                    else:
-                        pixel_loss += tf.reduce_mean(curr_proj_error) 
-                    # Prepare images for tensorboard summaries
-                    if i == 0:
-                        proj_image_stack = curr_proj_image
-                        proj_error_stack = curr_proj_error
-                        if opt.explain_reg_weight > 0:
-                            exp_mask_stack = tf.expand_dims(curr_exp[:,:,:,1], -1)
-                    else:
-                        proj_image_stack = tf.concat([proj_image_stack, 
-                                                      curr_proj_image], axis=3)
-                        proj_error_stack = tf.concat([proj_error_stack, 
-                                                      curr_proj_error], axis=3)
-                        if opt.explain_reg_weight > 0:
-                            exp_mask_stack = tf.concat([exp_mask_stack, 
-                                tf.expand_dims(curr_exp[:,:,:,1], -1)], axis=3)
+                # for i in range(opt.num_source):
+                #     # Inverse warp the source image to the target image frame
+                #     curr_proj_image = projective_inverse_warp(
+                #         curr_src_image_stack[:,:,:,3*i:3*(i+1)], 
+                #         tf.squeeze(pred_depth[s], axis=3), 
+                #         pred_poses[:,i,:], 
+                #         intrinsics[:,s,:,:])
+                #     curr_proj_error = tf.abs(curr_proj_image - curr_tgt_image)
+                #     # Cross-entropy loss as regularization for the 
+                #     # explainability prediction
+                #     if opt.explain_reg_weight > 0:
+                #         curr_exp_logits = tf.slice(pred_exp_logits[s], 
+                #                                    [0, 0, 0, i*2], 
+                #                                    [-1, -1, -1, 2])
+                #         exp_loss += opt.explain_reg_weight * \
+                #             self.compute_exp_reg_loss(curr_exp_logits,
+                #                                       ref_exp_mask)
+                #         curr_exp = tf.nn.softmax(curr_exp_logits)
+                #     # Photo-consistency loss weighted by explainability
+                #     if opt.explain_reg_weight > 0:
+                #         pixel_loss += tf.reduce_mean(curr_proj_error * \
+                #             tf.expand_dims(curr_exp[:,:,:,1], -1))
+                #     else:
+                #         pixel_loss += tf.reduce_mean(curr_proj_error) 
+                #     # Prepare images for tensorboard summaries
+                #     if i == 0:
+                #         proj_image_stack = curr_proj_image
+                #         proj_error_stack = curr_proj_error
+                #         if opt.explain_reg_weight > 0:
+                #             exp_mask_stack = tf.expand_dims(curr_exp[:,:,:,1], -1)
+                #     else:
+                #         proj_image_stack = tf.concat([proj_image_stack, 
+                #                                       curr_proj_image], axis=3)
+                #         proj_error_stack = tf.concat([proj_error_stack, 
+                #                                       curr_proj_error], axis=3)
+                #         if opt.explain_reg_weight > 0:
+                #             exp_mask_stack = tf.concat([exp_mask_stack, 
+                #                 tf.expand_dims(curr_exp[:,:,:,1], -1)], axis=3)
                 tgt_image_all.append(curr_tgt_image)
-                src_image_stack_all.append(curr_src_image_stack)
-                proj_image_stack_all.append(proj_image_stack)
-                proj_error_stack_all.append(proj_error_stack)
+                # src_image_stack_all.append(curr_src_image_stack)
+                # proj_image_stack_all.append(proj_image_stack)
+                # proj_error_stack_all.append(proj_error_stack)
                 if opt.explain_reg_weight > 0:
                     exp_mask_stack_all.append(exp_mask_stack)
-            total_loss = pixel_loss + smooth_loss + exp_loss
+            # total_loss = pixel_loss + smooth_loss + exp_loss
+            total_loss = smooth_loss
 
         with tf.name_scope("train_op"):
             train_vars = [var for var in tf.trainable_variables()]
@@ -115,17 +114,17 @@ class MarsLearner(object):
 
         # Collect tensors that are useful later (e.g. tf summary)
         self.pred_depth = pred_depth
-        self.pred_poses = pred_poses
+        # self.pred_poses = pred_poses
         self.steps_per_epoch = loader.steps_per_epoch
         self.total_loss = total_loss
-        self.pixel_loss = pixel_loss
-        self.exp_loss = exp_loss
+        # self.pixel_loss = pixel_loss
+        # self.exp_loss = exp_loss
         self.smooth_loss = smooth_loss
         self.tgt_image_all = tgt_image_all
-        self.src_image_stack_all = src_image_stack_all
-        self.proj_image_stack_all = proj_image_stack_all
-        self.proj_error_stack_all = proj_error_stack_all
-        self.exp_mask_stack_all = exp_mask_stack_all
+        # self.src_image_stack_all = src_image_stack_all
+        # self.proj_image_stack_all = proj_image_stack_all
+        # self.proj_error_stack_all = proj_error_stack_all
+        # self.exp_mask_stack_all = exp_mask_stack_all
 
     def get_reference_explain_mask(self, downscaling):
         opt = self.opt
@@ -160,32 +159,27 @@ class MarsLearner(object):
     def collect_summaries(self):
         opt = self.opt
         tf.summary.scalar("total_loss", self.total_loss)
-        tf.summary.scalar("pixel_loss", self.pixel_loss)
+        # tf.summary.scalar("pixel_loss", self.pixel_loss)
         tf.summary.scalar("smooth_loss", self.smooth_loss)
-        tf.summary.scalar("exp_loss", self.exp_loss)
+        # tf.summary.scalar("exp_loss", self.exp_loss)
         for s in range(opt.num_scales):
             tf.summary.histogram("scale%d_depth" % s, self.pred_depth[s])
             tf.summary.image('scale%d_disparity_image' % s, 1./self.pred_depth[s])
             tf.summary.image('scale%d_target_image' % s, \
                              self.deprocess_image(self.tgt_image_all[s]))
-            for i in range(opt.num_source):
-                if opt.explain_reg_weight > 0:
-                    tf.summary.image(
-                        'scale%d_exp_mask_%d' % (s, i), 
-                        tf.expand_dims(self.exp_mask_stack_all[s][:,:,:,i], -1))
-                tf.summary.image(
-                    'scale%d_source_image_%d' % (s, i), 
-                    self.deprocess_image(self.src_image_stack_all[s][:, :, :, i*3:(i+1)*3]))
-                tf.summary.image('scale%d_projected_image_%d' % (s, i), 
-                    self.deprocess_image(self.proj_image_stack_all[s][:, :, :, i*3:(i+1)*3]))
-                tf.summary.image('scale%d_proj_error_%d' % (s, i),
-                    self.deprocess_image(tf.clip_by_value(self.proj_error_stack_all[s][:,:,:,i*3:(i+1)*3] - 1, -1, 1)))
-        tf.summary.histogram("tx", self.pred_poses[:,:,0])
-        tf.summary.histogram("ty", self.pred_poses[:,:,1])
-        tf.summary.histogram("tz", self.pred_poses[:,:,2])
-        tf.summary.histogram("rx", self.pred_poses[:,:,3])
-        tf.summary.histogram("ry", self.pred_poses[:,:,4])
-        tf.summary.histogram("rz", self.pred_poses[:,:,5])
+            # for i in range(opt.num_source):
+            #     if opt.explain_reg_weight > 0:
+            #         tf.summary.image(
+            #             'scale%d_exp_mask_%d' % (s, i), 
+            #             tf.expand_dims(self.exp_mask_stack_all[s][:,:,:,i], -1))
+            #     tf.summary.image(
+            #         'scale%d_source_image_%d' % (s, i), 
+            #         self.deprocess_image(self.src_image_stack_all[s][:, :, :, i*3:(i+1)*3]))
+            #     tf.summary.image('scale%d_projected_image_%d' % (s, i), 
+            #         self.deprocess_image(self.proj_image_stack_all[s][:, :, :, i*3:(i+1)*3]))
+            #     tf.summary.image('scale%d_proj_error_%d' % (s, i),
+            #         self.deprocess_image(tf.clip_by_value(self.proj_error_stack_all[s][:,:,:,i*3:(i+1)*3] - 1, -1, 1)))
+        
         # for var in tf.trainable_variables():
         #     tf.summary.histogram(var.op.name + "/values", var)
         # for grad, var in self.grads_and_vars:
