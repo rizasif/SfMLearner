@@ -1,13 +1,13 @@
 from __future__ import division
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-def gray2rgb(im, cmap='gray'):
-    cmap = plt.get_cmap(cmap)
-    rgba_img = cmap(im.astype(np.float32))
-    rgb_img = np.delete(rgba_img, 3, 2)
-    return rgb_img
+# def gray2rgb(im, cmap='gray'):
+#     cmap = plt.get_cmap(cmap)
+#     rgba_img = cmap(im.astype(np.float32))
+#     rgb_img = np.delete(rgba_img, 3, 2)
+#     return rgb_img
 
 def normalize_depth_for_display(depth, pc=95, crop_percent=0, normalizer=None, cmap='gray'):
     # convert to disparity
