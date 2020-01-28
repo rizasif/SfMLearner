@@ -19,9 +19,9 @@ flags.DEFINE_integer("batch_size", 4, "The size of of a sample batch")
 flags.DEFINE_integer("img_height", 1000, "Image height")
 flags.DEFINE_integer("img_width", 1000, "Image width")
 flags.DEFINE_integer("seq_length", 3, "Sequence length for each example")
-flags.DEFINE_integer("max_steps", 20000, "Maximum number of training iterations") #200000
+flags.DEFINE_integer("max_steps", 2000, "Maximum number of training iterations") #200000
 flags.DEFINE_integer("summary_freq", 100, "Logging every log_freq iterations")
-flags.DEFINE_integer("save_latest_freq", 5000, \
+flags.DEFINE_integer("save_latest_freq", 500, \
     "Save the latest model every save_latest_freq iterations (overwrites the previous latest model)") #5000
 flags.DEFINE_integer("num_scales", 4, "currently set to 4")
 flags.DEFINE_integer("num_source", 2, "should be seq_length-1")
