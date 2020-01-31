@@ -23,6 +23,7 @@ def pose_exp_net(tgt_image, src_image_stack, do_exp=True, is_training=True):
     with tf.variable_scope('pose_exp_net') as sc:
         end_points_collection = sc.original_name_scope + '_end_points'
         with slim.arg_scope([slim.conv2d, slim.conv2d_transpose],
+                            weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
                             normalizer_fn=None,
                             weights_regularizer=slim.l2_regularizer(0.05),
                             activation_fn=tf.nn.relu,

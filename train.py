@@ -12,7 +12,7 @@ flags.DEFINE_string("dataset_dir", "data/train.txt", "Dataset directory")
 flags.DEFINE_string("checkpoint_dir", "./checkpoints/", "Directory name to save the checkpoints")
 flags.DEFINE_string("init_checkpoint_file", None, "Specific checkpoint file to initialize from")
 flags.DEFINE_float("learning_rate", 0.0001, "Learning rate of for adam")
-flags.DEFINE_float("beta1", 0.5, "Momentum term of adam")
+flags.DEFINE_float("beta1", 0.6, "Momentum term of adam")
 flags.DEFINE_float("smooth_weight", 0.25, "Weight for smoothness")
 flags.DEFINE_float("explain_reg_weight", 0.0, "Weight for explanability regularization")
 flags.DEFINE_integer("batch_size", 5, "The size of of a sample batch")
@@ -20,7 +20,7 @@ flags.DEFINE_integer("img_height", 1000, "Image height")
 flags.DEFINE_integer("img_width", 1000, "Image width")
 flags.DEFINE_integer("seq_length", 1, "Sequence length for each example")
 flags.DEFINE_integer("max_steps", 2000, "Maximum number of training iterations") #200000
-flags.DEFINE_integer("summary_freq", 50, "Logging every log_freq iterations")
+flags.DEFINE_integer("summary_freq", 10, "Logging every log_freq iterations")
 flags.DEFINE_integer("save_latest_freq", 100, \
     "Save the latest model every save_latest_freq iterations (overwrites the previous latest model)") #5000
 flags.DEFINE_integer("num_scales", 1, "currently set to 4")
